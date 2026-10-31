@@ -80,7 +80,7 @@ final class ProjectController {
             panel.allowedContentTypes = [.png]
             panel.canCreateDirectories = true
             panel.isExtensionHidden = false
-            panel.title = "Export Layer as PNG"
+            panel.title = L10n.text("Export Layer as PNG")
             panel.nameFieldStringValue = names[0]
             guard await run(panel), let url = panel.url else { return }
             urls = [url]
@@ -90,19 +90,19 @@ final class ProjectController {
             panel.canChooseDirectories = true
             panel.canChooseFiles = false
             panel.canCreateDirectories = true
-            panel.title = "Export \(layers.count) Layers as PNGs"
-            panel.message = "Choose a folder for the layers’ PNGs."
-            panel.prompt = "Export"
+            panel.title = L10n.format("Export %lld Layers as PNGs", layers.count)
+            panel.message = L10n.text("Choose a folder for the layers’ PNGs.")
+            panel.prompt = L10n.text("Export")
             guard await run(panel), let url = panel.url else { return }
             urls = names.map { url.appendingPathComponent($0) }
             folder = url
             let existing = urls.filter { FileManager.default.fileExists(atPath: $0.path) }
             if !existing.isEmpty {
                 let alert = NSAlert()
-                alert.messageText = existing.count == 1 ? "“\(existing[0].lastPathComponent)” already exists. Replace it?"
-                    : "\(existing.count) of these files already exist in “\(url.lastPathComponent)”. Replace them?"
-                alert.addButton(withTitle: "Replace")
-                alert.addButton(withTitle: "Cancel")
+                alert.messageText = existing.count == 1 ? L10n.format("“%@” already exists. Replace it?", existing[0].lastPathComponent)
+                    : L10n.format("%lld of these files already exist in “%@”. Replace them?", existing.count, url.lastPathComponent)
+                alert.addButton(withTitle: L10n.text("Replace"))
+                alert.addButton(withTitle: L10n.text("Cancel"))
                 guard await show(alert) == .alertFirstButtonReturn else { return }
             }
         }
@@ -119,9 +119,10 @@ final class ProjectController {
         } catch { await showError("Couldn’t export layers", error: error); return }
         if !empty.isEmpty {
             let alert = NSAlert()
-            alert.messageText = empty.count == 1 ? "“\(empty[0])” has nothing to export" : "\(empty.count) layers have nothing to export"
-            alert.informativeText = "A layer with no visible pixels, such as an adjustment layer, isn’t saved as a PNG."
-            alert.addButton(withTitle: "OK")
+            alert.messageText = empty.count == 1 ? L10n.format("“%@” has nothing to export", empty[0])
+                : L10n.format("%lld layers have nothing to export", empty.count)
+            alert.informativeText = L10n.text("A layer with no visible pixels, such as an adjustment layer, isn’t saved as a PNG.")
+            alert.addButton(withTitle: L10n.text("OK"))
             _ = await show(alert)
         }
     }
@@ -155,7 +156,7 @@ final class ProjectController {
             let chosen: (data: Data, format: ExportFormat)? = await withCheckedContinuation { continuation in
                 let sheet = NSWindow()
                 sheet.styleMask = [.titled, .fullSizeContentView]
-                sheet.title = "Export As"
+                sheet.title = L10n.text("Export As")
                 sheet.contentViewController = NSHostingController(rootView: ExportAsSheet(
                     raster: raster, deepRaster: deepRaster, hdrRaster: hdrRaster, snapshot: snapshot, session: session,
                     format: start ?? lastExportFormat) { chosen in
@@ -185,7 +186,7 @@ final class ProjectController {
         panel.allowedContentTypes = [format.type]
         panel.canCreateDirectories = true
         panel.isExtensionHidden = false
-        panel.title = "Export " + format.rawValue
+        panel.title = L10n.format("Export %@", format.localizedName)
         panel.nameFieldStringValue = (session.projectURL?.deletingPathExtension().lastPathComponent ?? "Untitled")
             + "." + (format.type.preferredFilenameExtension ?? format.rawValue.lowercased())
         let response: NSApplication.ModalResponse
@@ -199,7 +200,7 @@ final class ProjectController {
         let options: CanvasSizeOptions? = await withCheckedContinuation { continuation in
             let sheet = NSWindow()
             sheet.styleMask = [.titled, .fullSizeContentView]
-            sheet.title = "Canvas Size"
+            sheet.title = L10n.text("Canvas Size")
             sheet.contentViewController = NSHostingController(rootView: CanvasSizeSheet(document: document, session: session) { options in
                 window.endSheet(sheet)
                 sheet.orderOut(nil)
@@ -221,7 +222,7 @@ final class ProjectController {
         let options: ImageSizeOptions? = await withCheckedContinuation { continuation in
             let sheet = NSWindow()
             sheet.styleMask = [.titled, .fullSizeContentView]
-            sheet.title = "Image Size"
+            sheet.title = L10n.text("Image Size")
             sheet.contentViewController = NSHostingController(rootView: ImageSizeSheet(document: document) { options in
                 window.endSheet(sheet)
                 sheet.orderOut(nil)
@@ -243,7 +244,7 @@ final class ProjectController {
         let options: TrimOptions? = await withCheckedContinuation { continuation in
             let sheet = NSWindow()
             sheet.styleMask = [.titled, .fullSizeContentView]
-            sheet.title = "Trim"
+            sheet.title = L10n.text("Trim")
             sheet.contentViewController = NSHostingController(rootView: TrimSheet { options in
                 window.endSheet(sheet)
                 sheet.orderOut(nil)
@@ -270,7 +271,7 @@ final class ProjectController {
         let settings: (LayoutGrid, GridAppearance)? = await withCheckedContinuation { continuation in
             let sheet = NSWindow()
             sheet.styleMask = [.titled, .fullSizeContentView]
-            sheet.title = "Grid"
+            sheet.title = L10n.text("Grid")
             sheet.contentViewController = NSHostingController(rootView: GridSettingsSheet(
                 session: session, grid: original.grid, appearance: original.appearance,
                 preview: { [session] grid, appearance in
@@ -306,7 +307,7 @@ final class ProjectController {
             panel.canCreateDirectories = true
             panel.isExtensionHidden = false
             panel.nameFieldStringValue = session.projectURL?.lastPathComponent ?? "Untitled.comp"
-            panel.title = asNew ? "Save Project As" : "Save Project"
+            panel.title = L10n.text(asNew ? "Save Project As" : "Save Project")
             let response: NSApplication.ModalResponse
             if let window { response = await panel.beginSheetModal(for: window) }
             else { response = await panel.begin() }
@@ -358,7 +359,7 @@ final class ProjectController {
             panel.allowsMultipleSelection = false
             panel.canChooseDirectories = false
             panel.treatsFilePackagesAsDirectories = false
-            panel.title = "Open Project"
+            panel.title = L10n.text("Open Project")
             let response: NSApplication.ModalResponse
             if let window { response = await panel.beginSheetModal(for: window) }
             else { response = await panel.begin() }
@@ -428,11 +429,11 @@ final class ProjectController {
         await finishWriting()
         guard session.isModified, session.document != nil else { return true }
         let alert = NSAlert()
-        alert.messageText = "Save changes to \(session.projectURL?.lastPathComponent ?? "Untitled")?"
-        alert.informativeText = "Your changes will be lost if you don’t save them."
-        alert.addButton(withTitle: "Save")
-        alert.addButton(withTitle: "Cancel")
-        alert.addButton(withTitle: "Don’t Save")
+        alert.messageText = L10n.format("Save changes to %@?", session.projectURL?.lastPathComponent ?? L10n.text("Untitled"))
+        alert.informativeText = L10n.text("Your changes will be lost if you don’t save them.")
+        alert.addButton(withTitle: L10n.text("Save"))
+        alert.addButton(withTitle: L10n.text("Cancel"))
+        alert.addButton(withTitle: L10n.text("Don’t Save"))
         let response = await show(alert)
         if response == .alertFirstButtonReturn { return await saveCurrent() }
         return response == .alertThirdButtonReturn
@@ -441,9 +442,9 @@ final class ProjectController {
     private func showError(_ title: String, error: Error) async {
         let alert = NSAlert()
         alert.alertStyle = .warning
-        alert.messageText = title
+        alert.messageText = L10n.text(title)
         alert.informativeText = error.localizedDescription
-        alert.addButton(withTitle: "OK")
+        alert.addButton(withTitle: L10n.text("OK"))
         _ = await show(alert)
     }
 

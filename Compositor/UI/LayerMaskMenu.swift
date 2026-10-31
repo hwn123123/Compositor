@@ -23,11 +23,11 @@ struct MaskAloneBadge: NSViewRepresentable {
     let session: EditorSession
     let layer: ImageLayer
     func makeNSView(context: Context) -> CanvasPillView {
-        CanvasPillView(symbol: "rectangle.inset.filled", closeLabel: "Stop viewing the mask",
-                       closeHelp: "Show the image again (or Option-click the mask thumbnail)") { [session] in session.viewsMaskAlone = false }
+        CanvasPillView(symbol: "rectangle.inset.filled", closeLabel: L10n.text("Stop viewing the mask"),
+                       closeHelp: L10n.text("Show the image again (or Option-click the mask thumbnail)")) { [session] in session.viewsMaskAlone = false }
     }
     func updateNSView(_ view: CanvasPillView, context: Context) {
-        view.title = "Layer Mask"
+        view.title = L10n.text("Layer Mask")
         view.detail = layer.name
     }
 }
@@ -39,13 +39,13 @@ struct ProofBadge: NSViewRepresentable {
     /// The gamut warning's pill rather than the proof's.
     var gamut = false
     func makeNSView(context: Context) -> CanvasPillView {
-        gamut ? CanvasPillView(symbol: "exclamationmark.triangle", closeLabel: "Hide the gamut warning",
-                               closeHelp: "Stop marking colors the profile can't print") { [session] in session.showsGamutWarning = false }
-              : CanvasPillView(symbol: "printer", closeLabel: "Stop proofing",
-                               closeHelp: "Show the document's own colors again") { [session] in session.proofsColors = false }
+        gamut ? CanvasPillView(symbol: "exclamationmark.triangle", closeLabel: L10n.text("Hide the gamut warning"),
+                               closeHelp: L10n.text("Stop marking colors the profile can't print")) { [session] in session.showsGamutWarning = false }
+              : CanvasPillView(symbol: "printer", closeLabel: L10n.text("Stop proofing"),
+                               closeHelp: L10n.text("Show the document's own colors again")) { [session] in session.proofsColors = false }
     }
     func updateNSView(_ view: CanvasPillView, context: Context) {
-        view.title = gamut ? "CMYK Gamut Warning" : "CMYK Proof"
+        view.title = L10n.text(gamut ? "CMYK Gamut Warning" : "CMYK Proof")
         view.detail = session.proofProfile?.name ?? ""
     }
 }

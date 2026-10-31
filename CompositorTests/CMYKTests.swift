@@ -102,9 +102,10 @@ struct CMYKTests {
     /// it is; the profile comes with them.
     @Test func layeredCMYKPhotoshopFilesOpen() throws {
         let document = try PSDReader.read(try layeredCMYK())
-        #expect(document.cmykProfile?.name == "Generic CMYK Profile")
+        let expectedProfile = try profile()
+        #expect(document.cmykProfile?.data == expectedProfile.data)
         #expect(document.layers.map(\.name) == ["Red", "Gray"])
-        let printedRed = try pixel(try CMYK.convert(try swatch(CGColor(srgbRed: 1, green: 0, blue: 0, alpha: 1)), to: try profile(),
+        let printedRed = try pixel(try CMYK.convert(try swatch(CGColor(srgbRed: 1, green: 0, blue: 0, alpha: 1)), to: expectedProfile,
                                                     over: CGColor(gray: 1, alpha: 1)))
         let red = try pixel(try #require(document.layers[0].image))
         #expect(zip(red, printedRed).allSatisfy { abs($0 - $1) <= 3 }, "red as ink prints it: \(red), expected \(printedRed)")
@@ -123,6 +124,7 @@ struct CMYKTests {
         session.confirmConversions = { _ in true }
         await session.importImages([url])
         #expect(session.document?.layers.count == 2)
-        #expect(session.proofProfile?.name == "Generic CMYK Profile")
+        let expectedProfile = try profile()
+        #expect(session.proofProfile?.data == expectedProfile.data)
     }
 }

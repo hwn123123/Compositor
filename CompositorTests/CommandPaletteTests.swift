@@ -56,16 +56,22 @@ struct CommandPaletteTests {
     @Test func realMenuBarRunsItsCommands() async throws {
         let bar = try #require(NSApp.mainMenu)
         func entries() -> [CommandPaletteEntry] { CommandPaletteMenu.entries(in: bar, skipping: CommandPaletteController.skipped) }
+        let view = L10n.text("View")
+        let filter = L10n.text("Filter")
+        let gaussianBlur = L10n.text("Gaussian Blur") + "…"
+        let searchCommands = L10n.text("Search Commands…")
+        let zoomIn = L10n.text("Zoom In")
+        let pixelGrid = L10n.text("Pixel Grid (800% and above)")
         func gridState() -> NSControl.StateValue? {
-            bar.items.first { $0.title == "View" }?.submenu?.items.first { $0.title == "Pixel Grid (800% and above)" }?.state
+            bar.items.first { $0.title == view }?.submenu?.items.first { $0.title == pixelGrid }?.state
         }
         let listed = entries()
         let titles = Set(listed.map(\.title))
-        #expect(titles.contains("Filter › Gaussian Blur…") && !titles.contains("View › Search Commands…"))
+        #expect(titles.contains("\(filter) › \(gaussianBlur)") && !titles.contains("\(view) › \(searchCommands)"))
         // The test host has no document open, so Zoom In is disabled: listed, greyed.
-        let zoom = try #require(listed.first { $0.title == "View › Zoom In" })
+        let zoom = try #require(listed.first { $0.title == "\(view) › \(zoomIn)" })
         #expect(!zoom.isEnabled)
-        let grid = try #require(listed.first { $0.title == "View › Pixel Grid (800% and above)" })
+        let grid = try #require(listed.first { $0.title == "\(view) › \(pixelGrid)" })
         let before = try #require(gridState())
         grid.perform()
         try await Task.sleep(for: .milliseconds(300))

@@ -8,7 +8,7 @@ struct CompositorApp: App {
     @AppStorage("navigator.visible") private var showsNavigator = false
     private var session: EditorSession { applicationDelegate.session }
     private func filterMenuItem(_ kind: FilterKind) -> some View {
-        Button("\(kind.rawValue)…") { session.beginFilter(kind) }
+        Button(kind.localizedName + "…") { session.beginFilter(kind) }
             .disabled(!(kind == .vignette ? session.canVignette : session.canAdjustColors) || session.hueSaturation != nil)
     }
     var body: some Scene {
@@ -317,7 +317,7 @@ struct CompositorApp: App {
                     Button("Hue/Saturation…") { session.beginHueSaturation() }
                         .configuredKeyboardShortcut("u").disabled(!session.canAdjustColors)
                     ForEach([FilterKind.blackWhite, .colorBalance, .exposure, .gradientMap, .grain], id: \.self) { kind in
-                        Button("\(kind.rawValue)…") { session.beginFilter(kind) }
+                        Button(kind.localizedName + "…") { session.beginFilter(kind) }
                             .disabled(!session.canAdjustColors || session.hueSaturation != nil)
                     }
                     Button(session.isMaskSelected ? "Invert Mask" : "Invert") { Task { await session.invertPixels() } }
@@ -345,7 +345,7 @@ struct CompositorApp: App {
                     }
                 }
                 CommandMenu("Filter") {
-                    Button(session.lastFilter.map { "Last Filter: " + $0.rawValue } ?? "Last Filter") {
+                    Button(session.lastFilter.map { L10n.format("Last Filter: %@", $0.localizedName) } ?? L10n.text("Last Filter")) {
                         Task { await session.repeatLastFilter() }
                     }
                         // ⌃⌘F, as in Photoshop; ⌘F is the command palette.
@@ -362,11 +362,11 @@ struct CompositorApp: App {
                     Menu("New Adjustment Layer") {
                         // The Image menu's adjustments, then the Filter menu's filters.
                         ForEach(AdjustmentKind.imageAdjustments, id: \.self) { kind in
-                            Button(kind.rawValue + (kind.isEditable ? "…" : "")) { session.addAdjustment(kind) }
+                            Button(kind.localizedName + (kind.isEditable ? "…" : "")) { session.addAdjustment(kind) }
                         }
                         Divider()
                         ForEach(AdjustmentKind.filters, id: \.self) { kind in
-                            Button(kind.rawValue + "…") { session.addAdjustment(kind) }
+                            Button(kind.localizedName + "…") { session.addAdjustment(kind) }
                         }
                     }.disabled(!session.canEditLayers || session.document == nil)
                     Button("Edit Adjustment…") {
@@ -378,7 +378,7 @@ struct CompositorApp: App {
                     Button(session.selection == nil ? "Duplicate Layer" : "Layer via Copy") { session.layerViaCopy() }
                         .configuredKeyboardShortcut("j").disabled(!session.canCopyPixels && !(session.selection == nil && session.canEditLayers && session.activeLayer != nil))
                     Divider()
-                    Button(session.selectedClippingTitle) { session.toggleSelectedClipping() }
+                    Button(L10n.text(session.selectedClippingTitle)) { session.toggleSelectedClipping() }
                     .configuredKeyboardShortcut("g", modifiers: [.command, .option])
                     .disabled(!session.canToggleSelectedClipping)
                     Divider()
@@ -392,7 +392,7 @@ struct CompositorApp: App {
                         .configuredKeyboardShortcut("n", modifiers: [.command, .shift]).disabled(!session.canEditLayers)
                     Button("Rename Layer…") { session.renamingLayerID = session.activeLayerID }
                         .disabled(!session.canEditLayers || session.activeLayer == nil)
-                    Button(session.visibilityTitle) {
+                    Button(L10n.text(session.visibilityTitle)) {
                         session.toggleSelectedLayersVisibility()
                     }.disabled(!session.canEditLayers || session.activeLayer == nil)
                     Divider()
@@ -401,7 +401,7 @@ struct CompositorApp: App {
                     Button("Move Layer Down") { session.moveActiveLayer(by: -1) }
                         .configuredKeyboardShortcut("[").disabled(!session.canMoveActiveLayer(by: -1))
                     Group {
-                        Button(session.mergeTitle) { session.mergeLayers() }
+                        Button(L10n.text(session.mergeTitle)) { session.mergeLayers() }
                             .configuredKeyboardShortcut("e").disabled(!session.canMergeLayers)
                         // As in the Layers panel's menu: whichever would change a selected layer, both for a mix.
                         if session.canConvertToSixteenBit || !session.canConvertToEightBit {
@@ -418,19 +418,21 @@ struct CompositorApp: App {
                             .disabled(!session.canTransform)
                         Menu("Align") {
                             ForEach(LayerAlignment.allCases, id: \.self) { alignment in
-                                Button(alignment.rawValue) { session.alignLayers(alignment) }
+                                Button(alignment.localizedName) { session.alignLayers(alignment) }
                             }
                         }
                             .disabled(!session.canAlignLayers)
                         Menu("Distribute") {
                             ForEach(LayerDistribution.allCases, id: \.self) { distribution in
-                                Button(distribution.rawValue) { session.distributeLayers(distribution) }
+                                Button(distribution.localizedName) { session.distributeLayers(distribution) }
                             }
                         }
                             .disabled(!session.canDistributeLayers)
                     }
                     Divider()
-                    Button(session.selectedEffect != nil ? "Delete " + session.selectedEffect!.kind.rawValue : session.isMaskSelected && session.activeLayer.flatMap({ session.selectedMask(for: $0) }) != nil ? "Delete Layer Mask" : session.selectedLayerIDs.count > 1 ? "Delete Layers" : "Delete Layer") {
+                    Button(session.selectedEffect.map { L10n.format("Delete %@", $0.kind.localizedName) }
+                        ?? L10n.text(session.isMaskSelected && session.activeLayer.flatMap({ session.selectedMask(for: $0) }) != nil
+                            ? "Delete Layer Mask" : session.selectedLayerIDs.count > 1 ? "Delete Layers" : "Delete Layer")) {
                         session.deleteLayerOrMask()
                     }
                         .disabled(!session.canEditLayers || session.activeLayer == nil)
@@ -442,7 +444,7 @@ struct CompositorApp: App {
     private func loadCMYKProfile() {
         let panel = NSOpenPanel()
         panel.allowedContentTypes = [UTType(filenameExtension: "icc") ?? .data, UTType(filenameExtension: "icm") ?? .data]
-        panel.message = "Choose a CMYK ICC profile, such as the one your printer gave you"
+        panel.message = L10n.text("Choose a CMYK ICC profile, such as the one your printer gave you")
         guard panel.runModal() == .OK, let url = panel.url else { return }
         do { session.proofProfile = try CMYK.load(url) }
         catch { session.importError = error.localizedDescription }

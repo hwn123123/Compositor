@@ -40,7 +40,7 @@ struct TransformInspector: View {
                 Picker("Sampling", selection: Binding(get: { value.sampling }, set: { sampling in
                     change { $0.sampling = sampling }
                 })) {
-                    ForEach(LayerSampling.allCases, id: \.self) { Text($0.rawValue).tag($0) }
+                    ForEach(LayerSampling.allCases, id: \.self) { Text($0.localizedName).tag($0) }
                 }.frame(width: 170)
                 Button { change { $0.flipX.toggle() } } label: {
                     Image(systemName: "arrow.left.and.right.righttriangle.left.righttriangle.right")
@@ -133,7 +133,7 @@ struct TransformValueField: View {
     @FocusState private var focused: Bool
     var body: some View {
         HStack(spacing: 4) {
-            Text(label).font(.caption).foregroundStyle(.secondary)
+            Text(L10n.text(label)).font(.caption).foregroundStyle(.secondary)
                 .scrubbable(sensitivity: 1, value: Binding(get: { value }, set: { newValue in
                     change(newValue)
                     text = Self.formatted(Double(newValue))
@@ -189,10 +189,10 @@ private struct AlignButton: View {
     private func row(_ alignments: [LayerAlignment], _ distributions: [LayerDistribution]) -> some View {
         HStack(spacing: 2) {
             ForEach(alignments, id: \.self) { alignment in
-                icon(alignment.symbol, "Align " + alignment.rawValue) { session.alignLayers(alignment) }
+                icon(alignment.symbol, L10n.format("Align %@", alignment.localizedName)) { session.alignLayers(alignment) }
             }
             ForEach(distributions, id: \.self) { distribution in
-                icon(distribution.symbol, "Distribute " + distribution.rawValue + " (three or more layers)") {
+                icon(distribution.symbol, L10n.format("Distribute %@ (three or more layers)", distribution.localizedName)) {
                     session.distributeLayers(distribution)
                 }
                 .disabled(!session.canDistributeLayers)
